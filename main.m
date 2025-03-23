@@ -7,7 +7,7 @@ images = r.img;
 TEs=load('case01-TEs.txt')
 % disp(TEs);
 id_img1 = 1;
-id_img2 = 5;
+id_img2 = 10;
 [T2_2point] = estimateT2_twopoints(images(:,:,:,id_img1), images(:,:,:,id_img2), TEs(id_img1), TEs(id_img2));
  
 [T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);

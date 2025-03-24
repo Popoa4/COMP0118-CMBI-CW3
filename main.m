@@ -4,8 +4,6 @@ r=load_nii('case01-qt2_reg.nii');
 r.img(r.img(:)<0)=0;
 images = r.img;
 
-% size(images)
-
 TEs=load('case01-TEs.txt');
 % disp(TEs);
 

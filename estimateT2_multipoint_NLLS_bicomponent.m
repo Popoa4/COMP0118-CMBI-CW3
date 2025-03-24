@@ -1,4 +1,4 @@
-function [T2_1_map, T2_2_map, S0_map, V1_map] = estimateT2_multipoint_NLLS_bicomponent(images, TEs, mask)
+function [T2_1_map, T2_2_map, S0_map, V1_map, mean_residual] = estimateT2_multipoint_NLLS_bicomponent(images, TEs, mask)
 [rows, cols, slices, num_echoes] = size(images);
 
 residuals = zeros(size(images));

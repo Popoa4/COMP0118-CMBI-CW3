@@ -26,7 +26,7 @@ signal_voxel = squeeze(images(x, y, z, :));
 
 % Plot the time intensity curve for a single voxel
 figure;
-plot(TE, signal_voxel, '-', 'LineWidth', 2);
+plot(TEs, signal_voxel, '-', 'LineWidth', 2);
 xlabel('Echo Time (ms)');
 ylabel('Signal Intensity');
 title('T2 Decay in a Single Voxel');
@@ -42,7 +42,7 @@ roi_signal = squeeze(mean(mean(images(x_range, y_range, z_slice, :), 1), 2));
 
 % Plot the time intensity curve for the selected ROI
 figure;
-plot(TE, roi_signal, '-', 'LineWidth', 2, 'Color', 'k');
+plot(TEs, roi_signal, '-', 'LineWidth', 2, 'Color', 'k');
 xlabel('Echo Time (ms)');
 ylabel('Mean Signal Intensity');
 title('T2 Decay Curve for Selected ROI');
@@ -53,7 +53,7 @@ mean_signal = squeeze(mean(mean(mean(images,1),2),3));
 
 % Plot the time intensity curve for the mean brain signal
 figure;
-plot(TE, mean_signal, '-', 'LineWidth', 2);
+plot(TEs, mean_signal, '-', 'LineWidth', 2);
 xlabel('Echo Time (ms)');
 ylabel('Mean Signal Intensity');
 title('Average T2 Decay Across the Whole Brain');
@@ -66,39 +66,114 @@ seg = load_nii('case01-seg.nii');
 wm_mask = seg.img(:, :, :, 4);
 
 % Initialize
-roi_signal = zeros(size(TE)); 
+roi_signal = zeros(size(TEs)); 
 
-for t = 1:length(TE)
-    current_image = squeeze(img(:, :, z_slice, t)); 
+for t = 1:length(TEs)
+    current_image = squeeze(images(:, :, z_slice, t)); 
     wm_voxels = wm_mask(:, :, z_slice) > 0.5; % Select only the voxels that have a probability > 0.5
     roi_signal(t) = mean(current_image(wm_voxels)); 
 end
 
 % Plot the time intensity curve for the white matter
 figure;
-plot(TE, roi_signal, '-', 'LineWidth', 2, 'Color', 'k');
+plot(TEs, roi_signal, '-', 'LineWidth', 2, 'Color', 'k');
 xlabel('Echo Time (ms)');
 ylabel('Mean Signal Intensity');
 title('T2 Decay Curve for White Matter');
 grid on;
 
 %% Question 2
-
+% 0. two point
 id_img1 = 1;
-id_img2 = 5;
+id_img2 = 10;
+tic;
 [T2_2point] = estimateT2_twopoints(images(:,:,:,id_img1), images(:,:,:,id_img2), TEs(id_img1), TEs(id_img2));
- 
-[T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);
+time_2point = toc;
 
 figure;
-subplot(1,2,1);
 imagesc(T2_2point(:,:,round(end/2))); 
 title('Two-point'); 
 colorbar; 
 clim([0 100]);
 
-subplot(1,2,2);
+% 1. Least Square
+tic;
+[T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);
+time_linear = toc;
+score_linear = evaluate_model(T2_linear, S0_linear, images, TEs, time_linear, seg);
+
+figure;
+subplot(1,2,1);
 imagesc(T2_linear(:,:,round(end/2))); 
-title('Linear LS'); 
+title('T2 by Linear LS'); 
 colorbar; 
 clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_linear(:,:,round(end/2)));
+colorbar;
+title('S0 Map by Linear LS');
+colormap(jet);
+% 2. Weighted least square
+tic;
+[T2_weighted, S0_weighted] = estimateT2_multipoint_weighted(images, TEs);
+time_weighted = toc;
+score_weighted = evaluate_model(T2_weighted, S0_weighted, images, TEs, time_weighted, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_weighted(:,:,round(end/2))); 
+title('T2 by Weighted LS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_weighted(:,:,round(end/2)));
+colorbar;
+title('S0 Map by Weighted LS');
+colormap(jet);
+
+% 3. non-negative least-squares
+tic;
+[T2_NNLS, S0_NNLS] = estimateT2_multipoint_NNLS(images, TEs);
+time_NNLS = toc;
+score_NNLS = evaluate_model(T2_NNLS, S0_NNLS, images, TEs, time_NNLS, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_NNLS(:,:,round(end/2))); 
+title('T2 by NNLS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_NNLS(:,:,round(end/2)));
+colorbar;
+title('S0 Map by NNLS');
+colormap(jet);
+
+% 4. non-linear least squares
+tic;
+[T2_NLLS, S0_NLLS] = estimateT2_multipoint_NLLS(images, TEs);
+time_NLLS = toc;
+score_NNLS = evaluate_model(T2_NNLS, S0_NNLS, images, TEs, time_NNLS, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_NLLS(:,:,round(end/2))); 
+title('T2 by NLLS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_NLLS(:,:,round(end/2)));
+colorbar;
+title('S0 Map by NLLS');
+colormap(jet);
+
+% Print the fit time
+fprintf('Two-point method: %.2f seconds\n', time_2point);
+fprintf('Least Square method: %.2f seconds\n', time_linear);
+fprintf('Weighted least square method: %.2f seconds\n', time_weighted);
+fprintf('non-negative least-squares method: %.2f seconds\n', time_NNLS);
+fprintf('non-linear least squares method: %.2f seconds\n', time_NLLS);

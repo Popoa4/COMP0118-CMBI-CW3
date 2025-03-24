@@ -83,22 +83,103 @@ title('T2 Decay Curve for White Matter');
 grid on;
 
 %% Question 2
-
+% 0. two point
 id_img1 = 1;
 id_img2 = 10;
+tic;
 [T2_2point] = estimateT2_twopoints(images(:,:,:,id_img1), images(:,:,:,id_img2), TEs(id_img1), TEs(id_img2));
- 
-[T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);
+time_2point = toc;
 
 figure;
-subplot(1,2,1);
 imagesc(T2_2point(:,:,round(end/2))); 
 title('Two-point'); 
 colorbar; 
 clim([0 100]);
 
-subplot(1,2,2);
+% 1. Least Square
+tic;
+[T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);
+time_linear = toc;
+score_linear = evaluate_model(T2_linear, S0_linear, images, TEs, time_linear, seg);
+
+figure;
+subplot(1,2,1);
 imagesc(T2_linear(:,:,round(end/2))); 
-title('Linear LS'); 
+title('T2 by Linear LS'); 
 colorbar; 
 clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_linear(:,:,round(end/2)));
+colorbar;
+title('S0 Map by Linear LS');
+colormap(jet);
+% 2. Weighted least square
+tic;
+[T2_weighted, S0_weighted] = estimateT2_multipoint_weighted(images, TEs);
+time_weighted = toc;
+score_weighted = evaluate_model(T2_weighted, S0_weighted, images, TEs, time_weighted, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_weighted(:,:,round(end/2))); 
+title('T2 by Weighted LS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_weighted(:,:,round(end/2)));
+colorbar;
+title('S0 Map by Weighted LS');
+colormap(jet);
+
+% 3. non-negative least-squares
+tic;
+[T2_NNLS, S0_NNLS] = estimateT2_multipoint_NNLS(images, TEs);
+time_NNLS = toc;
+score_NNLS = evaluate_model(T2_NNLS, S0_NNLS, images, TEs, time_NNLS, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_NNLS(:,:,round(end/2))); 
+title('T2 by NNLS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_NNLS(:,:,round(end/2)));
+colorbar;
+title('S0 Map by NNLS');
+colormap(jet);
+
+% 4. non-linear least squares
+tic;
+[T2_NLLS, S0_NLLS] = estimateT2_multipoint_NLLS(images, TEs);
+time_NLLS = toc;
+score_NLLS = evaluate_model(T2_NLLS, S0_NLLS, images, TEs, time_NLLS, seg);
+
+figure;
+subplot(1,2,1);
+imagesc(T2_NLLS(:,:,round(end/2))); 
+title('T2 by NLLS'); 
+colorbar; 
+clim([0 100]);
+
+subplot(1,2,2);
+imagesc(S0_NLLS(:,:,round(end/2)));
+colorbar;
+title('S0 Map by NLLS');
+colormap(jet);
+
+% Print the fit time
+fprintf('Two-point method: %.2f seconds\n', time_2point);
+fprintf('Least Square method: %.2f seconds\n', time_linear);
+fprintf('Weighted least square method: %.2f seconds\n', time_weighted);
+fprintf('non-negative least-squares method: %.2f seconds\n', time_NNLS);
+fprintf('non-linear least squares method: %.2f seconds\n', time_NLLS);
+
+% Print and compare the scores of the models
+fprintf('Least Square method score: %.2f\n', score_linear);
+fprintf('Weighted least square method score: %.2f\n', score_weighted);
+fprintf('non-negative least-squares score: %.2f\n', score_NNLS);
+fprintf('non-linear least squares score: %.2f\n', score_NLLS);

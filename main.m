@@ -3,6 +3,7 @@
 r=load_nii('case01-qt2_reg.nii');
 r.img(r.img(:)<0)=0;
 images = r.img;
+
 % size(images)
 
 TEs=load('case01-TEs.txt');
@@ -83,11 +84,13 @@ title('T2 Decay Curve for White Matter');
 grid on;
 
 %% Question 2
+brain_mask = load_nii('case01-mask.nii');
+img_masked = images.*brain_mask.img;
 % 0. two point
 id_img1 = 1;
 id_img2 = 10;
 tic;
-[T2_2point] = estimateT2_twopoints(images(:,:,:,id_img1), images(:,:,:,id_img2), TEs(id_img1), TEs(id_img2));
+[T2_2point] = estimateT2_twopoints(img_masked(:,:,:,id_img1), img_masked(:,:,:,id_img2), TEs(id_img1), TEs(id_img2));
 time_2point = toc;
 
 figure;
@@ -98,9 +101,9 @@ clim([0 100]);
 
 % 1. Least Square
 tic;
-[T2_linear, S0_linear] = estimateT2_multipoint_linear(images, TEs);
+[T2_linear, S0_linear] = estimateT2_multipoint_linear(img_masked, TEs);
 time_linear = toc;
-score_linear = evaluate_model(T2_linear, S0_linear, images, TEs, time_linear, seg);
+score_linear = evaluate_model(T2_linear, S0_linear, img_masked, TEs, time_linear, seg);
 
 figure;
 subplot(1,2,1);
@@ -116,9 +119,9 @@ title('S0 Map by Linear LS');
 colormap(jet);
 % 2. Weighted least square
 tic;
-[T2_weighted, S0_weighted] = estimateT2_multipoint_weighted(images, TEs);
+[T2_weighted, S0_weighted] = estimateT2_multipoint_weighted(img_masked, TEs);
 time_weighted = toc;
-score_weighted = evaluate_model(T2_weighted, S0_weighted, images, TEs, time_weighted, seg);
+score_weighted = evaluate_model(T2_weighted, S0_weighted, img_masked, TEs, time_weighted, seg);
 
 figure;
 subplot(1,2,1);
@@ -135,9 +138,9 @@ colormap(jet);
 
 % 3. non-negative least-squares
 tic;
-[T2_NNLS, S0_NNLS] = estimateT2_multipoint_NNLS(images, TEs);
+[T2_NNLS, S0_NNLS] = estimateT2_multipoint_NNLS(img_masked, TEs);
 time_NNLS = toc;
-score_NNLS = evaluate_model(T2_NNLS, S0_NNLS, images, TEs, time_NNLS, seg);
+score_NNLS = evaluate_model(T2_NNLS, S0_NNLS, img_masked, TEs, time_NNLS, seg);
 
 figure;
 subplot(1,2,1);
@@ -154,9 +157,9 @@ colormap(jet);
 
 % 4. non-linear least squares
 tic;
-[T2_NLLS, S0_NLLS] = estimateT2_multipoint_NLLS(images, TEs);
+[T2_NLLS, S0_NLLS] = estimateT2_multipoint_NLLS(img_masked, TEs);
 time_NLLS = toc;
-score_NLLS = evaluate_model(T2_NLLS, S0_NLLS, images, TEs, time_NLLS, seg);
+score_NLLS = evaluate_model(T2_NLLS, S0_NLLS, img_masked, TEs, time_NLLS, seg);
 
 figure;
 subplot(1,2,1);

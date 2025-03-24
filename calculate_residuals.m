@@ -8,7 +8,7 @@ function residuals = calculate_residuals(images, TEs, T2_map, S0_map)
     for t = 1:num_echoes
         predicted = S0_map .* exp(-TEs(t) ./ T2_map);
         actual = images(:,:,:,t);
-        residuals(:,:,:,t) = actual - predicted;
+        residuals(:,:,:,t) = (actual - predicted).^2;
     end
     
     % cope with the useless value

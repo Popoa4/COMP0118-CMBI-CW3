@@ -14,11 +14,22 @@ for t = 1:length(TE)
 end
 
 % Video animation
+% Crea oggetto video
+v = VideoWriter('T2_animation.mp4', 'MPEG-4');
+v.FrameRate = 2; % 2 frame al secondo (corrisponde a pause(0.5))
+open(v);
+
 figure;
 colormap gray;
+
 for t = 1:length(TE)
     imagesc(img(:,:,slice_num,t));
     axis off;
     title(['TE = ', num2str(TE(t)), ' ms']);
-    pause(0.5); % Metti in pausa per 0.5 secondi tra i frame
+    drawnow;
+
+    frame = getframe(gcf);      % Cattura il frame
+    writeVideo(v, frame);       % Scrive nel video
 end
+
+close(v);  % Chiude il file

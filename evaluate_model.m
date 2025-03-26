@@ -4,13 +4,14 @@ function score = evaluate_model(T2_map, S0_map, images, TEs, running_time, seg)
     residuals = calculate_residuals(images, TEs, T2_map, S0_map);
     mean_residual = mean(abs(residuals(:)));
     
-    % 2. standardize the time
-    % normalized_time = running_time / 60;
+    % 2. Normalise residual and time (to [0, 1])
+    norm_residual = mean_residual / max_residual;
+    norm_time = running_time / max_time;
     
     % 3. Compute the score with the weights
     % disp(T2_error_WM);
     disp(mean_residual);
-    score = 0.5 * mean_residual + 0.5 * running_time;
+    score = 0.5 * norm_residual + 0.5 * norm_time;
     
     return;
 end

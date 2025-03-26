@@ -21,9 +21,9 @@ parfor i = 1:rows
                 if(mask(i, j, k) > 0)
 
                     % Starting point: [S0, v1, T2_1, T2_2]
-                    p0 = [max(signal), 0.5, 20, 70];
+                    p0 = [max(signal), 0.15, 20, 70];
                     lb = [0, 0, 10, 70];
-                    ub = [inf, 1, 50, 2500];
+                    ub = [inf, 0.4, 50, 2500];
 
                     % Non-linear model: S(TE) = S0 * [v1 * exp(-TE/T2_1) + (1 - v1) * exp(-TE/T2_2)]
                     objective_fun = @(p, TE) p(1) * (p(2) * exp(-TE / p(3)) + (1 - p(2)) * exp(-TE / p(4)));
